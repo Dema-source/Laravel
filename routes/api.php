@@ -104,11 +104,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
 //Google Drive API (OAuth)
 
-// Route لتوجيه المستخدم إلى صفحة تسجيل الدخول إلى Google
-Route::get('/login', [YourController::class, 'login']);
+// // Route لتوجيه المستخدم إلى صفحة تسجيل الدخول إلى Google
+// Route::get('/login', [YourController::class, 'login']);
 
-// Route بعد المصادقة
-Route::get('/callback', [YourController::class, 'callback']);
+// // Route بعد المصادقة
+// Route::get('/callback', [YourController::class, 'callback']);
 
-// Route لتحميل الملفات
-Route::post('/upload', [YourController::class, 'upload']);
+// // Route لتحميل الملفات
+// Route::post('/upload', [YourController::class, 'upload']);

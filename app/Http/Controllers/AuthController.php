@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Mail\WelcomeEmail;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -24,10 +25,7 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)
         ]);
         Mail::to($user->email)->send(new WelcomeEmail($user));
-        return response()->json([
-            'message' => 'user created successfully',
-            'user' => $user
-        ], 201);
+        return ResponseHelper::success('Data created successfully', $user);
     }
     public function signIn(Request $request)
     {
@@ -36,22 +34,14 @@ class AuthController extends Controller
             'password' => 'required|string'
         ]);
         if (!Auth::attempt($request->only('email', 'password')))
-            return response()->json([
-                'message' => 'Invalid email or password'
-            ], 401);
+            return ResponseHelper::error('Invalid email or password', [], 401);
         $user = User::where('email', $request->email)->firstOrFail();
         $token = $user->createToken('auth_Token')->plainTextToken;
-        return response()->json([
-            'message' => 'Login successfully',
-            'user' => $user,
-            'Token' => $token
-        ], 201);
+        return ResponseHelper::success('Login successfully', [$user, $token]);
     }
     public function signOut(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
-        return response()->json([
-            'message' => 'Logout successfully',
-        ], 200);
+        return ResponseHelper::success('Logout successfully', []);
     }
 }

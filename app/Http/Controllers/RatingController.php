@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Models\Book;
 use App\Models\Rating;
 use Exception;
@@ -20,34 +21,23 @@ class RatingController extends Controller
             try {
                 Book::findOrFail($bookId);
             } catch (ModelNotFoundException $e) {
-                return response()->json([
-                    'message' => 'book not found',
-                    'details' => $e->getMessage()
-                ], 404);
+                return ResponseHelper::error('Not Found', [], 404);
             }
             $request->validate([
                 'rating' => 'required|in:1,2,3,4,5'
             ]);
             $existingRating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
             if ($existingRating) {
-                return response()->json([
-                    'message' => 'You have already rated this book.'
-                ], 404);
+                return ResponseHelper::error('You have already rated this book.', [], 301);
             }
             $rating = Rating::create([
                 'user_id' => $userId,
                 'book_id' => $bookId,
                 'rating' => $request->rating
             ]);
-            return response()->json([
-                'message' => 'Thank you for participating. I hope you have a good user experience.',
-                'rating' => $rating
-            ], 200);
+            return ResponseHelper::success('Thank you for participating. I hope you have a good user experience.', $rating);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'something wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 404);
         }
     }
 
@@ -60,10 +50,7 @@ class RatingController extends Controller
             try {
                 $book = Book::findOrFail($bookId);
             } catch (ModelNotFoundException $e) {
-                return response()->json([
-                    'message' => 'book not found',
-                    'details' => $e->getMessage()
-                ], 404);
+                return ResponseHelper::error('Not Found', [], 404);
             }
 
             $rating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
@@ -71,19 +58,12 @@ class RatingController extends Controller
                 'rating' => 'required|in:1,2,3,4,5'
             ]);
             if ($rating->user_id !== $userId)
-                return response()->json([
-                    'message' => 'unautherized'
-                ], 403);
+                return ResponseHelper::error('unautherized', [], 403);
 
             $rating->update($validated);
-            return response()->json([
-                'message' => 'your rating on ' . $book->title . ' updated successfully'
-            ], 200);
+            return ResponseHelper::success('Data updated successfully', []);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'something wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 404);
         }
     }
 
@@ -96,27 +76,16 @@ class RatingController extends Controller
             try {
                 $book = Book::findOrFail($bookId);
             } catch (ModelNotFoundException $e) {
-                return response()->json([
-                    'message' => 'book not found',
-                    'details' => $e->getMessage()
-                ], 404);
+                return ResponseHelper::error('Not Found', [], 404);
             }
-
             $rating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
             if ($rating->user_id !== $userId)
-                return response()->json([
-                    'message' => 'unautherized'
-                ], 403);
+                return ResponseHelper::error('unautherized', [], 403);
 
             $rating->delete();
-            return response()->json([
-                'message' => 'your rating on ' . $book->title . ' deleted successfully'
-            ], 200);
+            return ResponseHelper::success('Data deleted successfully', []);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'something wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -128,21 +97,15 @@ class RatingController extends Controller
             $averageRating = Book::findOrFail($bookId)->ratings()->avg('rating');
 
             $number = $this->RateBook($averageRating);
-
-            return response()->json([
-                'average' => $averageRating,
-                'rating' => $this->getStarRating($number)
-            ], 200);
+            return ResponseHelper::success('Data deleted successfully', [$averageRating, $this->getStarRating($number)]);
+            // return response()->json([
+            //     'average' => $averageRating,
+            //     'rating' => $this->getStarRating($number)
+            // ], 200);
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'message' => 'Book not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => 'something wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -208,10 +171,11 @@ class RatingController extends Controller
                 ];
             }
         }
-        return response()->json([
-            'message' => 'Books with ' . $targetRating . ' rating',
-            'result' => $filteredBooks
-        ], 200);
+        return ResponseHelper::success('Books with ' . $targetRating . ' rating', $filteredBooks);
+        // return response()->json([
+        //     'message' => 'Books with ' . $targetRating . ' rating',
+        //     'result' => $filteredBooks
+        // ], 200);
     }
 
 

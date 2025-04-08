@@ -23,9 +23,8 @@ class BookController extends Controller
     public function viewBooks()
     {
         $books = Book::all();
-        return ResponseHelper::success('Data returen Suceess', $books);
+        return ResponseHelper::success('Data returned successfully', $books);
     }
-
 
     //  Returns:  book
     //  Accessable: by user and admin role
@@ -33,14 +32,13 @@ class BookController extends Controller
     {
         try {
             $books = Book::findOrFail($BookId);
-            return ResponseHelper::success('Data returen Suceess', $books);
+            return ResponseHelper::success('Data returned successfully', $books);
         } catch (ModelNotFoundException $e) {
             return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: Book
     //  Accessable: by admin role
@@ -91,7 +89,7 @@ class BookController extends Controller
                     return ResponseHelper::error('empty', [], 301);
                 }
             }
-            return ResponseHelper::success('Data returen Suceess', new BookResource($Book));
+            return ResponseHelper::success('Data returned successfully', new BookResource($Book));
         }
     }
 
@@ -107,15 +105,13 @@ class BookController extends Controller
                 $validated['image'] = $path;
             }
             $Book->update($validated);
-            return ResponseHelper::success('Data returened Suceess', new BookResource($Book));
+            return ResponseHelper::success('Data updated successfully', new BookResource($Book));
         } catch (ModelNotFoundException $e) {
-
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: nothing
     //  Accessable: by admin role
@@ -124,14 +120,13 @@ class BookController extends Controller
         try {
             $Book = Book::findOrFail($BookId);
             $Book->delete();
-            return ResponseHelper::success('Data deleated  Suceessfuly', []);
+            return ResponseHelper::success('Data deleated successfuly', []);
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: book details
     //  Accessable: by user and admin role
@@ -139,14 +134,13 @@ class BookController extends Controller
     {
         try {
             $book_details = Book::findOrFail($bookId)->details;
-            return ResponseHelper::success('Data returen Suceess', $book_details);
+            return ResponseHelper::success('Data returned successfully', $book_details);
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: auther for certain book
     //  Accessable: by user and admin role
@@ -154,14 +148,13 @@ class BookController extends Controller
     {
         try {
             $auther = Book::findOrFail($bookId)->auther;
-            return ResponseHelper::success('Data returen Suceess', $auther);
+            return ResponseHelper::success('Data returned successfully', $auther);
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns:  book with details
     //  Accessable: by user and admin role
@@ -169,9 +162,9 @@ class BookController extends Controller
     {
         try {
             $bookData = Book::with('details')->findOrFail($bookId);
-            return ResponseHelper::success('Data returen Suceess', new BookDetailsResource($bookData));
+            return ResponseHelper::success('Data returned successfully', new BookDetailsResource($bookData));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
@@ -183,14 +176,13 @@ class BookController extends Controller
     {
         try {
             $booksData = Book::with('details')->get();
-            return ResponseHelper::success('Data returen Suceess', BookDetailsResource::collection($booksData));
+            return ResponseHelper::success('Data returned successfully', BookDetailsResource::collection($booksData));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: attached successfully
     //  Accessable: by admin role
@@ -201,12 +193,11 @@ class BookController extends Controller
             $book->categories()->attach($request->category_id);
             return ResponseHelper::success('attached successfully', $book);
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: get all cartegories related for certain book
     //  Accessable: by user and admin role
@@ -215,14 +206,13 @@ class BookController extends Controller
         try {
             $book = Book::findOrFail($bookId);
             $categories = Book::findOrFail($bookId)->categories;
-            return ResponseHelper::success('Data returen Suceess',  CategoryResource::collection($categories));
+            return ResponseHelper::success('Data return success',  CategoryResource::collection($categories));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: all books with inputing key
     //  Accessable: by user and admin role
@@ -230,9 +220,9 @@ class BookController extends Controller
     {
         try {
             $book = Book::with('details')->where('title', 'LIKE', '%' . $key . '%')->get();
-            return ResponseHelper::success('Data returen Suceess', BookDetailsResource::collection($book));
+            return ResponseHelper::success('Data return success', BookDetailsResource::collection($book));
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
             return ResponseHelper::error($e->getMessage(), [], 500);
         }

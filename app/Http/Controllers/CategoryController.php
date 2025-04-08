@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-
+use App\Helpers\ResponseHelper;
 use App\Http\Requests\StoreNameRequest;
 use App\Http\Requests\UpdateNameRequest;
 use App\Http\Resources\CategoryResource;
@@ -20,10 +20,7 @@ class CategoryController extends Controller
     public function viewCategories()
     {
         $Categories = Category::all();
-        return response()->json([
-            'message' => 'Categories in our system are:',
-            'Categories' =>  CategoryResource::collection($Categories)
-        ], 200);
+        return ResponseHelper::success('Data returned successfully', CategoryResource::collection($Categories));
     }
 
 
@@ -32,10 +29,7 @@ class CategoryController extends Controller
     public function storeCategory(StoreNameRequest $request)
     {
         $Category = Category::create($request->validated());
-        return response()->json([
-            'message' => 'Category created successfully',
-            'Category' => new CategoryResource($Category)
-        ], 201);
+        return ResponseHelper::success('Data returned successfully', new CategoryResource($Category));
     }
 
 
@@ -46,20 +40,11 @@ class CategoryController extends Controller
         try {
             $Category = Category::findOrFail($CategoryId);
             $Category->update($request->validated());
-            return response()->json([
-                'message' => 'Category updated successfully',
-                'Categories' => new CategoryResource($Category)
-            ], 200);
+            return ResponseHelper::success('Data updated successfully', new CategoryResource($Category));
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Category not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -70,17 +55,11 @@ class CategoryController extends Controller
         try {
             $Category = Category::findOrFail($CategoryId);
             $Category->delete();
-            return response()->json([], 204);
+            return ResponseHelper::success('Data deleted successfully', []);
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Category not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -92,20 +71,11 @@ class CategoryController extends Controller
         try {
             $category = Category::findOrFail($categoryId);
             $books = Category::findOrFail($categoryId)->books;
-            return response()->json([
-                'category_name' => $category->name,
-                'Categories' => BookResource::collection($books)
-            ], 200);
+            return ResponseHelper::success('Data returned successfully', BookResource::collection($books));
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Category not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -113,6 +83,7 @@ class CategoryController extends Controller
     //  Accessable: by user and admin role
     public function search($key){
         $books = Category::with('books')->where('name','LIKE','%'.$key.'%')->get();
-        return response()->json($books, 200);
+        return ResponseHelper::success('Data returned successfully', $books);
+
     }
 }

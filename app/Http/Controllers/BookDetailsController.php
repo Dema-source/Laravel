@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Http\Requests\StoreDetailsRequest;
 use App\Http\Requests\UpdateDetailsRequest;
 use App\Http\Requests\UpdateNameRequest;
@@ -19,46 +20,30 @@ class BookDetailsController extends Controller
     public function viewBooksDetails()
     {
         $details = Book_Details::all();
-        return response()->json([
-            'message' => 'details for this book are:',
-            'details' => Book_DetailsResource::collection($details)
-        ], 200);
+        return ResponseHelper::success('Data returned successfully', Book_DetailsResource::collection($details));
     }
+
     //  Returns: book details
     //  Accessable: by user and admin role
     public function viewBookDetails($Book_DetailsId)
     {
         try {
             $details = Book_Details::findOrFail($Book_DetailsId);
-            return response()->json([
-                'message' => 'details for this book are:',
-                'details' => new Book_DetailsResource($details)
-            ], 200);
+            return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($details));
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Details not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: Book_Details
     //  Accessable: by admin role
     public function storeBookDetails(StoreDetailsRequest $request)
     {
         $Book_Details = Book_Details::create($request->validated());
-        return response()->json([
-            'message' => 'Book_Details created successfully',
-            'Book_Details' => new Book_DetailsResource($Book_Details)
-        ], 201);
+        return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($Book_Details));
     }
-
 
     //  Returns: Book_Details
     //  Accessable: by admin role
@@ -67,20 +52,11 @@ class BookDetailsController extends Controller
         try {
             $Book_Details = Book_Details::findOrFail($Book_DetailsId);
             $Book_Details->update($request->validated());
-            return response()->json([
-                'message' => 'Book_Details updated successfully',
-                'details' => new Book_DetailsResource($Book_Details)
-            ], 200);
+            return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($Book_Details));
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Details not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -91,17 +67,11 @@ class BookDetailsController extends Controller
         try {
             $Book_Details = Book_Details::findOrFail($Book_DetailsId);
             $Book_Details->delete();
-            return response()->json([], 204);
+            return ResponseHelper::success('Data returned successfully', []);
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Details not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -111,20 +81,13 @@ class BookDetailsController extends Controller
     {
         try {
             $book = Book_Details::findOrFail($Book_DetailsId)->book;
-            return response()->json($book, 200);
+            return ResponseHelper::success('Data returned successfully', $book);
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Details not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: books between 2 dates
     //  Accessable: by user and admin role
@@ -132,6 +95,6 @@ class BookDetailsController extends Controller
     {
         $books = Book_Details::with('book')->whereBetween('publication_date', [$startDate, $endDate])
             ->get();
-        return response()->json($books, 200);
+        return ResponseHelper::success('Data returned successfully', $books);
     }
 }

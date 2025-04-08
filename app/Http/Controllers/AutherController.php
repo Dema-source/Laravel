@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Http\Requests\StoreAutherRequest;
 use App\Http\Requests\StoreNameRequest;
 use App\Http\Requests\UpdateAutherRequest;
@@ -21,24 +22,16 @@ class AutherController extends Controller
     public function viewAuthers()
     {
         $authers = Auther::all();
-        return response()->json([
-            'message' => 'Authers in our system are:',
-            'authers' =>  AutherResource::collection($authers)
-        ], 200);
+        return ResponseHelper::success('Data returned successfully', $authers);
     }
-
 
     //  Returns: auther
     //  Accessable: by admin role
     public function storeAuther(StoreNameRequest $request)
     {
         $auther = Auther::create($request->validated());
-        return response()->json([
-            'message' => 'auther created successfully',
-            'auther' => new AutherResource($auther)
-        ], 201);
+        return ResponseHelper::success('Data returned successfully', new AutherResource($auther));
     }
-
 
     //  Returns: auther
     //  Accessable: by admin role
@@ -47,20 +40,11 @@ class AutherController extends Controller
         try {
             $auther = Auther::findOrFail($autherId);
             $auther->update($request->validated());
-            return response()->json([
-                'message' => 'auther updated successfully',
-                'authers' => new AutherResource($auther)
-            ], 200);
+            return ResponseHelper::success('Data returned successfully', new AutherResource($auther));
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Auther not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -71,22 +55,13 @@ class AutherController extends Controller
         try {
             $auther = Auther::findOrFail($autherId);
             $auther->delete();
-            return response()->json([
-                'message' => 'auther deleted successfully'
-            ], 200);
+            return ResponseHelper::success('Data deleted successfuly', []);
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Auther not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: Auther's books
     //  Accessable: by user and admin role
@@ -94,20 +69,13 @@ class AutherController extends Controller
     {
         try {
             $books = Auther::findOrFail($autherId)->books;
-            return response()->json($books, 200);
+            return ResponseHelper::success('Data returned successfully', $books);
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Auther not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
-
 
     //  Returns: auther with related books
     //  Accessable: by user and admin role
@@ -115,17 +83,11 @@ class AutherController extends Controller
     {
         try {
             $autherData = Auther::with('books')->findOrFail($autherId);
-            return response()->json(new AutherBookResource($autherData), 200);
+            return ResponseHelper::success('Data returned successfully', new AutherBookResource($autherData));
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Auther not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 
@@ -135,17 +97,11 @@ class AutherController extends Controller
     {
         try {
             $data = Auther::with('books')->where('name', 'LIKE', '%' . $key . '%')->get();
-            return response()->json($data, 200);
+            return ResponseHelper::success('Data returned successfully', $data);
         } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' =>  'not found',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'error' => 'something went wrong',
-                'details' => $e->getMessage()
-            ], 404);
+            return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
 }
