@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UpdateNameRequest extends FormRequest
 {
@@ -31,5 +34,11 @@ class UpdateNameRequest extends FormRequest
             'name.min' => 'name must not be less than 4',
             'name.regex' => ' name must start with capitale letter'
         ];
+    }
+
+
+    public function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(ResponseHelper::returnValidationError($validator));
     }
 }
