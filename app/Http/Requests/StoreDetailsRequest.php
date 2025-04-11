@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StoreDetailsRequest extends FormRequest
 {
@@ -29,13 +32,17 @@ class StoreDetailsRequest extends FormRequest
             'publication_date' => 'required|date'
         ];
     }
-    public function messages()
+    // public function messages()
+    // {
+    //     return [
+    //         'isbn.required' => 'Enter isbn',
+    //         'number_of_pages.min' => 'number_of_pages must not be less than 200',
+    //         'publication_date.required' => 'Enter publication_date',
+    //         'publication_date.date' => 'Enter a valid date'
+    //     ];
+    // }
+    public function failedValidation(Validator $validator)
     {
-        return [
-            'isbn.required' => 'Enter isbn',
-            'number_of_pages.min' => 'number_of_pages must not be less than 200',
-            'publication_date.required' => 'Enter publication_date',
-            'publication_date.date' => 'Enter a valid date'
-        ];
+        throw new HttpResponseException(ResponseHelper::returnValidationError($validator));
     }
 }

@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StoreBookRequest extends FormRequest
 {
@@ -22,11 +25,15 @@ class StoreBookRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'auther_id' => 'required',
-            'title' => 'required|string',
+            'auther_id' => 'required|exists:users,id',
+            'title' => 'required|string|unique:books,title',
             'image' => 'required|image|mimes:png,jpg,jpeg|max:2048',
-            'pdf_link' => 'file|mimes:pdf|max:2048|required_without:doc_link',
-            'doc_link' => 'file|mimes:doc,docx|max:2048|required_without:pdf_link'
+            'file' => 'file|mimes:pdf,doc,docx|max:2048|required',
+            // 'doc_link' => 'file|mimes:doc,docx|max:2048|required_without:pdf_link'
         ];
+    }
+    public function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(ResponseHelper::returnValidationError($validator));
     }
 }

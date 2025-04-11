@@ -16,8 +16,8 @@ return new class extends Migration
             $table->foreignId('auther_id')->constrained('authers')->cascadeOnDelete();
             $table->string('title');
             $table->string('image');
-            $table->string('pdf_link')->nullable();
-            $table->string('doc_link')->nullable();
+            $table->string('file')->nullable();
+            // $table->string('doc_link')->nullable();
             $table->timestamps();
         });
     }

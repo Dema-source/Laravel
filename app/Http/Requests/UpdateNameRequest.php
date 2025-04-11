@@ -28,14 +28,6 @@ class UpdateNameRequest extends FormRequest
             'name'=>'sometimes|string|min:4|regex:/^[A-Z].*/'
         ];
     }
-    public function messages()
-    {
-        return[
-            'name.min' => 'name must not be less than 4',
-            'name.regex' => ' name must start with capitale letter'
-        ];
-    }
-
 
     public function failedValidation(Validator $validator)
     {

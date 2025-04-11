@@ -41,6 +41,12 @@ class BookDetailsController extends Controller
     //  Accessable: by admin role
     public function storeBookDetails(StoreDetailsRequest $request)
     {
+        $existingBookDetails = Book_Details::where('book_id', $request->book_id)
+            ->orWhere('isbn', $request->isbn)
+            ->first();
+        if ($existingBookDetails) {
+            return ResponseHelper::error('This book details already exist.', [], 409);
+        }
         $Book_Details = Book_Details::create($request->validated());
         return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($Book_Details));
     }

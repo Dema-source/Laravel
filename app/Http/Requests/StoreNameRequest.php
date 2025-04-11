@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class StoreNameRequest extends FormRequest
 {
@@ -25,12 +28,9 @@ class StoreNameRequest extends FormRequest
             'name'=>'required|string|min:4|regex:/^[A-Z].*/'
         ];
     }
-    public function messages()
+
+    public function failedValidation(Validator $validator)
     {
-        return[
-            'name.required' => ' Enter the name',
-            'name.min' => 'name must not be less than 4',
-            'name.regex' => ' name must start with capitale letter'
-        ];
+        throw new HttpResponseException(ResponseHelper::returnValidationError($validator));
     }
 }

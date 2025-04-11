@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Helpers\ResponseHelper;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class UpdateDetailsRequest extends FormRequest
 {
@@ -29,11 +32,15 @@ class UpdateDetailsRequest extends FormRequest
             'publication_date' => 'sometimes|date'
         ];
     }
-    public function messages()
+    // public function messages()
+    // {
+    //     return [
+    //         'number_of_pages.min' => 'number_of_pages must not be less than 200',
+    //         'publication_date.date' => 'Enter a valid date'
+    //     ];
+    // }
+    public function failedValidation(Validator $validator)
     {
-        return [
-            'number_of_pages.min' => 'number_of_pages must not be less than 200',
-            'publication_date.date' => 'Enter a valid date'
-        ];
+        throw new HttpResponseException(ResponseHelper::returnValidationError($validator));
     }
 }

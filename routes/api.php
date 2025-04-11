@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     //Category
     Route::get('view_categories', [CategoryController::class, 'viewCategories']); //admin and user
+    Route::get('view_books_in_category/{id}', [CategoryController::class, 'getBooksInCategoriy']); //admin and user
+
 
     //Book
     Route::get('view_books', [BookController::class, 'viewBooks']); //admin and user
@@ -41,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('view_auther_for_book/{id}', [BookController::class, 'getAutherForBook']); //admin and user
     Route::get('view_book_with_details/{id}', [BookController::class, 'getBookwithDetails']); //admin and user
     Route::get('view_books_with_details', [BookController::class, 'getBookswithDetails']); //admin and user
+    Route::get('view_categories_for_book/{id}', [BookController::class, 'getCategoriesForBook']); //admin and user
 
     //Book_Details
     Route::get('view_books_details', [BookDetailsController::class, 'viewBooksDetails']); //admin and user
@@ -59,15 +62,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('store_category', [CategoryController::class, 'storeCategory']); //admin
         Route::put('update_category/{id}', [CategoryController::class, 'updateCategory']); //admin
         Route::delete('destroy_category/{id}', [CategoryController::class, 'destroyCategory']); //admin
-        Route::get('view_books_in_category/{id}', [CategoryController::class, 'getBooksInCategoriy']); //admin and user
-
+      
         //Book
         Route::post('store_book', [BookController::class, 'storeBook']); //admin
         Route::put('update_book/{id}', [BookController::class, 'updateBook']); //admin
         Route::delete('destroy_book/{id}', [BookController::class, 'destroyBook']); //admin
         Route::post('add_book_to_category/{id}', [BookController::class, 'storeBookInCategory']); //admin
-        Route::get('view_categories_for_book/{id}', [BookController::class, 'getCategoriesForBook']); //admin and user
-
+        
         //Book_Details
         Route::post('store_book_details', [BookDetailsController::class, 'storeBookDetails']); //admin
         Route::put('update_book_details/{id}', [BookDetailsController::class, 'updateBookDetails']); //admin

@@ -14,6 +14,7 @@ use App\Mail\NewBookNotification;
 use App\Models\User;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class BookController extends Controller
@@ -49,30 +50,21 @@ class BookController extends Controller
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('my book photo', 'public');
             $validated['image'] = $path;
-        }
+        } 
         //dealing with files(PDF,DOC)
         if ($request->hasFile('file')) {
             // get file extension
             $file = $request->file('file');
-            // $fileName = uniqid() . '.' . $file->getClientOriginalExtension();
             $extension = $file->getClientOriginalExtension();
-            //dealing with files(PDF,DOC)
-            if ($request->hasFile('file')) {
-                // get file extension
-                $file = $request->file('file');
-                $extension = $file->getClientOriginalExtension();
-                //check the extension
-                if ($extension === 'pdf') {
-                    $fpath = $file->store('pdfs', 'public');
-                    $validated['pdf_link'] = $fpath;
-                    $validated['doc_link'] = null;
-                } elseif ($extension === 'doc' || $extension === 'docx') {
-                    $fpath = $file->store('docs', 'public');
-                    $validated['doc_link'] = $fpath;
-                    $validated['pdf_link'] = null;
-                } else {
-                    return ResponseHelper::error('Unsupported file type. Only PDF and DOC files are allowed', [], 400);
-                }
+            //check the extension
+            if ($extension === 'pdf') {
+                $path = $file->store('pdfs', 'public');
+                $validated['file'] = $path;
+            } elseif ($extension === 'doc' || $extension === 'docx') {
+                $path = $file->store('docs', 'public');
+                $validated['file'] = $path;
+            } else {
+                return ResponseHelper::error('Unsupported file type. Only PDF and DOC files are allowed', [], 400);
             }
             $bookExists  = Book::where('title', $request->title)
                 ->where('auther_id', $request->auther_id)
@@ -190,8 +182,12 @@ class BookController extends Controller
     {
         try {
             $book = Book::findOrFail($bookId);
-            $book->categories()->attach($request->category_id);
-            return ResponseHelper::success('attached successfully', $book);
+            if (!$book->categories()->where('category_id', $request->category_id)->exists()) {
+                $book->categories()->attach($request->category_id);
+                return ResponseHelper::success('Attached successfully', $book);
+            } else {
+                return ResponseHelper::error('The category is already attached to this book.', [], 409);
+            }
         } catch (ModelNotFoundException $e) {
             return ResponseHelper::error('Not Found', [], 404);
         } catch (Exception $e) {
