@@ -13,9 +13,14 @@ use App\Http\Resources\CategoryResource;
 use App\Mail\NewBookNotification;
 use App\Models\User;
 use Exception;
+use Faker\Provider\HtmlLorem;
+use Faker\Provider\Lorem;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Smalot\PdfParser\Parser as PdfParser;
+use PhpOffice\PhpWord\IOFactory as PhpWordIOFactory;
+
 
 class BookController extends Controller
 {
@@ -50,19 +55,17 @@ class BookController extends Controller
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('my book photo', 'public');
             $validated['image'] = $path;
-        } 
+        }
         //dealing with files(PDF,DOC)
-        if ($request->hasFile('file')) {
+        if ($request->hasFile('file_path')) {
             // get file extension
-            $file = $request->file('file');
+            $file = $request->file('file_path');
             $extension = $file->getClientOriginalExtension();
             //check the extension
             if ($extension === 'pdf') {
                 $path = $file->store('pdfs', 'public');
-                $validated['file'] = $path;
             } elseif ($extension === 'doc' || $extension === 'docx') {
                 $path = $file->store('docs', 'public');
-                $validated['file'] = $path;
             } else {
                 return ResponseHelper::error('Unsupported file type. Only PDF and DOC files are allowed', [], 400);
             }
@@ -72,6 +75,8 @@ class BookController extends Controller
             if ($bookExists) {
                 return ResponseHelper::error('this book is already exists', [], 301);
             }
+            $validated['file_path'] = $path;
+            $validated['file_type'] = $extension;
             $Book = Book::create($validated);
             $users = User::where('notify_new_books', 1)->get();
             foreach ($users as $user) {
@@ -223,4 +228,85 @@ class BookController extends Controller
             return ResponseHelper::error($e->getMessage(), [], 500);
         }
     }
+
+    public function getContent($bookId)
+    {
+        $book = Book::findOrFail($bookId);
+        $filePath = storage_path('app/public/' . $book->file_path);
+        error_log("File path for PDF: " . $filePath);
+
+        if ($book->file_type === 'pdf') {
+            //reading pdf's content
+            $pdfParser = new pdfParser();
+            if ($filePath) {
+                try {
+                    $pdf = $pdfParser->parseFile($filePath);
+                    $content = $pdf->getText();
+                    return $this->textToSpeech($content);
+                } catch (\Exception $e) {
+                    return response()->json(['message' => 'Error parsing PDF: ' . $e->getMessage()], 500);
+                }
+            } else {
+                return response()->json(['message' => 'File not found: ' . $filePath], 404);
+            }
+        } elseif ($book->file_type === 'doc' || $book->file_type === 'docx') {
+            //  Analytic DOC and DOCX  
+            try {
+                $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
+                $content = '';
+
+                // Extract text from each section 
+                foreach ($phpWord->getSections() as $section) {
+                    foreach ($section->getElements() as $element) {
+                        if ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+                            foreach ($element->getElements() as $text) {
+                                if ($text instanceof \PhpOffice\PhpWord\Element\Text) {
+                                    $content .= $text->getText() . "\n";
+                                }
+                            }
+                        }
+                    }
+                }
+                // return response()->json(['content' => $content], 200);
+                return $this->textToSpeech($content);
+            } catch (\Exception $e) {
+                return response()->json(['message' => 'Error parsing DOC/DOCX: ' . $e->getMessage()], 500);
+            }
+        }
+
+        return response()->json(['message' => 'Unsupported file type: ' . $book->file_type], 400);
+    }
+
+    public function textToSpeech($text)
+    {
+        
+        if (empty($text)) {
+            return response()->json(['message' => 'No text provided for conversion.'], 400);
+        }
+
+        // نصائح لتجنب مشاكل الترميز، خاصة إذا كان هناك أحرف خاصة  
+        $text = escapeshellarg($text);
+        $audioFilePath = storage_path('app/public/audio/') . time() . '_output.wav';
+        return response()->json($audioFilePath, 200);
+        
+    //     // تأكد من وجود المجلد  
+    //     $audioDir = dirname($audioFilePath);
+    //     if (!file_exists($audioDir)) {
+    //         mkdir($audioDir, 0777, true); // انشئ المجلد إذا لم يكن موجوداً  
+    //     }
+
+    //     // استخدام eSpeak مع المسار الصحيح  
+    //     $command = '"C:\\Program Files (x86)\\eSpeak\\command_line\\espeak.exe" -w ' . $audioFilePath . ' ' . $text;
+    //     exec($command, $output, $returnVar);
+
+    //     // التحقق من نتيجة الأمر  
+    //     if ($returnVar !== 0) {
+    //         // قم بتسجيل مخرجات الأمر  
+    //         Log::error('Audio generation command failed: ' . implode("\n", $output));
+    //         return response()->json(['message' => 'Error generating audio: ' . implode("\n", $output)], 500);
+    //     }
+
+    //     Log::info('Audio generated successfully: ' . $audioFilePath);
+    //     return response()->json(['message' => 'Audio generated successfully.', 'audio_file' => $audioFilePath], 200);
+     }
 }
