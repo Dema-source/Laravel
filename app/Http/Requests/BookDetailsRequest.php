@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UpdateBookRequest extends FormRequest
+class BookDetailsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,11 +24,31 @@ class UpdateBookRequest extends FormRequest
      */
     public function rules(): array
     {
+        if ($this->isMethod('POST')) {
+            return $this->createRules();
+        }
+        return $this->updateRules();
+    }
+    public function createRules()
+    {
         return [
-            'title' => 'sometimes|string',
-            'image' => 'sometimes|image|mimes:png,jpg,jpeg|max:2048',
+            'book_id' => 'required',
+            'isbn' => 'required',
+            'number_of_pages' => 'sometimes',
+            // 'number_of_pages' => 'sometimes|min:200|max:2000',
+            'publication_date' => 'required|date'
         ];
     }
+    public function updateRules()
+    {
+        return [
+            'isbn' => 'sometimes',
+            'number_of_pages' => 'sometimes',
+            // 'number_of_pages' => 'sometimes|min:200',
+            'publication_date' => 'sometimes|date'
+        ];
+    }
+
     public function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(ResponseHelper::returnValidationError($validator));

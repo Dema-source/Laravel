@@ -19,7 +19,8 @@ class BookResource extends JsonResource
             'Book (id)' => $this->id,
             'Book (title)' => $this->title,
             'Book (image)' => $this->image,
-            'Book (file)' => $this->file ? Storage::url($this->file) : null,
+            'Book (file_path)' => $this->file_path ? Storage::url($this->file_path) : null,
+            'Book (file_type)' => $this->file_type ? $this->file_type : null,
         ];
     }
 }

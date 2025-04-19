@@ -3,87 +3,78 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
-use App\Http\Requests\StoreNameRequest;
-use App\Http\Requests\UpdateNameRequest;
+use App\Http\Requests\CategoryRequest;
+use App\Http\Resources\BookResource;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use App\Http\Requests;
-use App\Http\Resources\BookResource;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CategoryController extends Controller
 {
-    //  Returns: all Categories
-    //  Accessable: by user and admin role
-    public function viewCategories()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
         $Categories = Category::all();
         return ResponseHelper::success('Data returned successfully', CategoryResource::collection($Categories));
     }
 
-
-    //  Returns: Category
-    //  Accessable: by admin role
-    public function storeCategory(StoreNameRequest $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(CategoryRequest $request)
     {
+        $categoryExists = Category::where('name', $request->name)->exists();
+        if ($categoryExists) {
+            return ResponseHelper::error('this category is already exists', [], 301);
+        }
         $Category = Category::create($request->validated());
         return ResponseHelper::success('Data returned successfully', new CategoryResource($Category));
     }
 
-
-    //  Returns: Category
-    //  Accessable: by admin role
-    public function updateCategory(UpdateNameRequest $request, int $CategoryId)
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
     {
-        try {
-            $Category = Category::findOrFail($CategoryId);
-            $Category->update($request->validated());
-            return ResponseHelper::success('Data updated successfully', new CategoryResource($Category));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        //
     }
 
-    //  Returns: nothing
-    //  Accessable: by admin role
-    public function destroyCategory(int $CategoryId)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(CategoryRequest $request, int $CategoryId)
     {
-        try {
-            $Category = Category::findOrFail($CategoryId);
-            $Category->delete();
-            return ResponseHelper::success('Data deleted successfully', []);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $Category = Category::findOrFail($CategoryId);
+        $Category->update($request->validated());
+        return ResponseHelper::success('Data updated successfully', new CategoryResource($Category));
     }
 
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(int $CategoryId)
+    {
+        $Category = Category::findOrFail($CategoryId);
+        $Category->delete();
+        return ResponseHelper::success('Data deleted successfully', []);
+    }
 
-    //  Returns: get all book related in certain category
+        //  Returns: get all book related in certain category
     //  Accessable: by user and admin role
     public function getBooksInCategoriy(int $categoryId)
     {
-        try {
-            $category = Category::findOrFail($categoryId);
-            $books = Category::findOrFail($categoryId)->books;
-            return ResponseHelper::success('Data returned successfully', BookResource::collection($books));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $category = Category::findOrFail($categoryId);
+        $books = Category::findOrFail($categoryId)->books;
+        return ResponseHelper::success('Data returned successfully', BookResource::collection($books));
     }
 
     //  Returns: all books with inputing key
     //  Accessable: by user and admin role
-    public function search($key){
-        $books = Category::with('books')->where('name','LIKE','%'.$key.'%')->get();
+    public function search($key)
+    {
+        $books = Category::with('books')->where('name', 'LIKE', '%' . $key . '%')->get();
         return ResponseHelper::success('Data returned successfully', $books);
-
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class UpdateDetailsRequest extends FormRequest
+class CategoryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,23 +22,25 @@ class UpdateDetailsRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-
-    public function rules(): array
+    public function rules()
+    {
+        if ($this->isMethod('POST')) {
+            return $this->createRules();
+        }
+        return $this->updateRules();
+    }
+    public function createRules()
     {
         return [
-            'isbn' => 'sometimes',
-            'number_of_pages' => 'sometimes',
-            // 'number_of_pages' => 'sometimes|min:200',
-            'publication_date' => 'sometimes|date'
+            'name' => 'required|string|min:4|regex:/^[A-Z].*/'
         ];
     }
-    // public function messages()
-    // {
-    //     return [
-    //         'number_of_pages.min' => 'number_of_pages must not be less than 200',
-    //         'publication_date.date' => 'Enter a valid date'
-    //     ];
-    // }
+    public function updateRules()
+    {
+        return [
+            'name' => 'sometimes|string|min:4|regex:/^[A-Z].*/'
+        ];
+    }
     public function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(ResponseHelper::returnValidationError($validator));

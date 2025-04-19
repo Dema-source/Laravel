@@ -5,108 +5,83 @@ namespace App\Http\Controllers;
 use App\Helpers\ResponseHelper;
 use App\Models\Book;
 use App\Models\Rating;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class RatingController extends Controller
 {
-    //  Returns: rating
-    //  Accessable: by user and admin role
-    public function addRateForBook(int $bookId, Request $request)
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
-        try {
-            $userId = Auth::user()->id;
-            try {
-                Book::findOrFail($bookId);
-            } catch (ModelNotFoundException $e) {
-                return ResponseHelper::error('Not Found', [], 404);
-            }
-            $request->validate([
-                'rating' => 'required|in:1,2,3,4,5'
-            ]);
-            $existingRating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
-            if ($existingRating) {
-                return ResponseHelper::error('You have already rated this book.', [], 301);
-            }
-            $rating = Rating::create([
-                'user_id' => $userId,
-                'book_id' => $bookId,
-                'rating' => $request->rating
-            ]);
-            return ResponseHelper::success('Thank you for participating. I hope you have a good user experience.', $rating);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
-        }
+        //
     }
 
-    //  Returns: nothing
-    //  Accessable: by user and admin role
-    public function updateRateForBook(int $bookId, Request $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request, int $bookId)
     {
-        try {
-            $userId = Auth::user()->id;
-            try {
-                $book = Book::findOrFail($bookId);
-            } catch (ModelNotFoundException $e) {
-                return ResponseHelper::error('Not Found', [], 404);
-            }
-
-            $rating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
-            $validated = $request->validate([
-                'rating' => 'required|in:1,2,3,4,5'
-            ]);
-            if ($rating->user_id !== $userId)
-                return ResponseHelper::error('unautherized', [], 403);
-
-            $rating->update($validated);
-            return ResponseHelper::success('Data updated successfully', []);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+        $userId = Auth::user()->id;
+        if (!$userId) {
+            return ResponseHelper::error('User is not authenticated', [], 401);
         }
+        Book::findOrFail($bookId);
+        $request->validate([
+            'rating' => 'required|in:1,2,3,4,5'
+        ]);
+        $existingRating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
+        if ($existingRating) {
+            return ResponseHelper::error('You have already rated this book.', [], 301);
+        }
+        $rating = Rating::create([
+            'user_id' => $userId,
+            'book_id' => $bookId,
+            'rating' => $request->rating
+        ]);
+        return ResponseHelper::success('Thank you for participating. I hope you have a good user experience.', $rating);
     }
 
-    //  Returns: nothing
-    //  Accessable: by user and admin role
-    public function removeBookRating(int $bookId)
+    /**
+     * Display the specified resource.
+     */
+    public function show(int $bookId)
     {
-        try {
-            $userId = Auth::user()->id;
-            try {
-                $book = Book::findOrFail($bookId);
-            } catch (ModelNotFoundException $e) {
-                return ResponseHelper::error('Not Found', [], 404);
-            }
-            $rating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
-            if ($rating->user_id !== $userId)
-                return ResponseHelper::error('unautherized', [], 403);
-
-            $rating->delete();
-            return ResponseHelper::success('Data deleted successfully', []);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $averageRating = Book::findOrFail($bookId)->ratings()->avg('rating');
+        $number = $this->RateBook($averageRating);
+        return ResponseHelper::success('Data deleted successfully', [$averageRating, $this->getStarRating($number)]);
     }
 
-    //  Returns: book rating
-    //  Accessable: by user and admin role
-    public function getBookRating(int $bookId)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(int $bookId, Request $request)
     {
-        try {
-            $averageRating = Book::findOrFail($bookId)->ratings()->avg('rating');
+        $userId = Auth::user()->id;
+        $book = Book::findOrFail($bookId);
+        $rating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
+        $validated = $request->validate([
+            'rating' => 'required|in:1,2,3,4,5'
+        ]);
+        if ($rating->user_id !== $userId)
+            return ResponseHelper::error('unautherized', [], 403);
+        $rating->update($validated);
+        return ResponseHelper::success('Data updated successfully', []);
+    }
 
-            $number = $this->RateBook($averageRating);
-            return ResponseHelper::success('Data deleted successfully', [$averageRating, $this->getStarRating($number)]);
-            // return response()->json([
-            //     'average' => $averageRating,
-            //     'rating' => $this->getStarRating($number)
-            // ], 200);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(int $bookId)
+    {
+        $userId = Auth::user()->id;
+        $book = Book::findOrFail($bookId);
+        $rating = Rating::where('user_id', $userId)->where('book_id', $bookId)->first();
+        if ($rating->user_id !== $userId)
+            return ResponseHelper::error('unautherized', [], 403);
+        $rating->delete();
+        return ResponseHelper::success('Data deleted successfully', []);
     }
 
     //  Returns: number of rate
@@ -125,7 +100,6 @@ class RatingController extends Controller
             return 5;
         }
     }
-
 
     public function getStarRating(int $number)
     {
@@ -172,10 +146,6 @@ class RatingController extends Controller
             }
         }
         return ResponseHelper::success('Books with ' . $targetRating . ' rating', $filteredBooks);
-        // return response()->json([
-        //     'message' => 'Books with ' . $targetRating . ' rating',
-        //     'result' => $filteredBooks
-        // ], 200);
     }
 
 

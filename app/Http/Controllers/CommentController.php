@@ -3,28 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
+use App\Http\Resources\CommentResource;
 use App\Models\Book;
-use App\Models\Comment as ModelsComment;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\Comment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Comment;
-use App\Http\Resources\CommentResource;
-use Exception;
 
 class CommentController extends Controller
 {
-    //  Returns: comment
-    //  Accessable: by user and admin role
-    public function addUserCommentOnBook(int $bookId, Request $request)
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
+        //
+    }
 
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request, int $bookId)
+    {
         $userId = Auth::user()->id;
-        try {
-            Book::findOrFail($bookId);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found',[], 404);
-        }
+        Book::findOrFail($bookId);
         $validated = $request->validate([
             'comment_text' => 'required|string|max:255',
         ]);
@@ -36,65 +37,59 @@ class CommentController extends Controller
         return ResponseHelper::success('Data return success', new CommentResource($comment));
     }
 
-    //  Returns: comments on specifi book
-    //  Accessable: by user and admin role
-    public function getCommentOnBook(int $bookId)
+    /**
+     * Display the specified resource.
+     */
+    public function show(int $bookId)
     {
         $comments = Book::findOrFail($bookId)->comments()->orderby('created_at', 'desc')->get();
         return ResponseHelper::success('Data returned successfully', CommentResource::collection($comments));
     }
 
-    public function removeCommentOnBook(int $bookId, Request $request)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, int $bookId)
     {
-        try {
-            $userId = Auth::user()->id;
-            $userRole = Auth::user()->role;
-            $commentId = $request->id;
-
-            //search on book
-            $book = Book::findOrFail($bookId);
-
-            //search on speific comment
-            $comment = $book->comments()->findOrFail($commentId);
-
-            if ($userRole === 'user') {
-                if ($comment->user_id !== $userId)
-                    return ResponseHelper::error('unautherized', [], 403);
-                $comment->delete();
-                return ResponseHelper::success('Data deleted successfully', []);
-            } else {
-                $comment->delete();
-                return ResponseHelper::success('Data deleted successfully', []);
-            }
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
-        }
+        $userId = Auth::user()->id;
+        $commentId = $request->id;
+        $validated = $request->validate([
+            'comment_text' => 'required|string|max:255'
+        ]);
+        //search on book
+        $book = Book::findOrFail($bookId);
+        //search on speific comment
+        $comment = $book->comments()->findOrFail($commentId);
+        if ($comment->user_id !== $userId)
+            return ResponseHelper::error('unautherized', [], 403);
+        $comment->update($validated);
+        return ResponseHelper::success('Data returned successfully', $comment);
     }
 
-    //  Returns: comment on specifi book
-    //  Accessable: by user and admin role
-    public function updateCommentOnBook(int $bookId, Request $request)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Request $request, int $bookId)
     {
-        try {
-            $userId = Auth::user()->id;
-            $commentId = $request->id;
-            $validated = $request->validate([
-                'comment_text' => 'required|string|max:255'
-            ]);
-            //search on book
-            $book = Book::findOrFail($bookId);
-            //search on speific comment
-            $comment = $book->comments()->findOrFail($commentId);
+        $userId = Auth::user()->id;
+        $userRole = Auth::user()->role;
+        $commentId = $request->id;
+
+        //search on book
+        $book = Book::findOrFail($bookId);
+
+        //search on speific comment
+        $comment = $book->comments()->findOrFail($commentId);
+
+        if ($userRole === 'user') {
             if ($comment->user_id !== $userId)
                 return ResponseHelper::error('unautherized', [], 403);
-            $comment->update($validated);
-            return ResponseHelper::success('Data returned successfully', $comment);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 404);
+            $comment->delete();
+            return ResponseHelper::success('Data deleted successfully', []);
+        } else {
+            $comment->delete();
+            return ResponseHelper::success('Data deleted successfully', []);
         }
     }
 }
+

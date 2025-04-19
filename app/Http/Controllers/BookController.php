@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
+use App\Http\Requests\BookRequest;
 use App\Http\Requests\StoreBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Http\Resources\BookResource;
@@ -13,42 +14,26 @@ use App\Http\Resources\CategoryResource;
 use App\Mail\NewBookNotification;
 use App\Models\User;
 use Exception;
-use Faker\Provider\HtmlLorem;
-use Faker\Provider\Lorem;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Smalot\PdfParser\Parser as PdfParser;
 use PhpOffice\PhpWord\IOFactory as PhpWordIOFactory;
 
-
 class BookController extends Controller
 {
-    //  Returns: all books
-    //  Accessable: by user and admin role
-    public function viewBooks()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
         $books = Book::all();
         return ResponseHelper::success('Data returned successfully', $books);
     }
 
-    //  Returns:  book
-    //  Accessable: by user and admin role
-    public function viewbook($BookId)
-    {
-        try {
-            $books = Book::findOrFail($BookId);
-            return ResponseHelper::success('Data returned successfully', $books);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
-    }
-
-    //  Returns: Book
-    //  Accessable: by admin role
-    public function storeBook(StoreBookRequest $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(BookRequest $request)
     {
         $validated = $request->validated();
         //dealing with images
@@ -90,113 +75,83 @@ class BookController extends Controller
         }
     }
 
-    //  Returns: Book
-    //  Accessable: by admin role
-    public function updateBook(UpdateBookRequest $request, int $BookId)
+    /**
+     * Display the specified resource.
+     */
+    public function show($BookId)
     {
-        try {
-            $Book = Book::findOrFail($BookId);
-            $validated = $request->validated();
-            if ($request->hasFile('image')) {
-                $path = $request->file('image')->store('my book photo', 'public');
-                $validated['image'] = $path;
-            }
-            $Book->update($validated);
-            return ResponseHelper::success('Data updated successfully', new BookResource($Book));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $books = Book::findOrFail($BookId);
+        return ResponseHelper::success('Data returned successfully', $books);
     }
 
-    //  Returns: nothing
-    //  Accessable: by admin role
-    public function destroyBook(int $BookId)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(BookRequest $request, int $BookId)
     {
-        try {
-            $Book = Book::findOrFail($BookId);
-            $Book->delete();
-            return ResponseHelper::success('Data deleated successfuly', []);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
+        $Book = Book::findOrFail($BookId);
+        $validated = $request->validated();
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('my book photo', 'public');
+            $validated['image'] = $path;
         }
+        $Book->update($validated);
+        return ResponseHelper::success('Data updated successfully', new BookResource($Book));
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(int $BookId)
+    {
+        $Book = Book::findOrFail($BookId);
+        $Book->delete();
+        return ResponseHelper::success('Data deleated successfuly', []);
     }
 
     //  Returns: book details
     //  Accessable: by user and admin role
     public function getBookDetails($bookId)
     {
-        try {
-            $book_details = Book::findOrFail($bookId)->details;
-            return ResponseHelper::success('Data returned successfully', $book_details);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $book_details = Book::findOrFail($bookId)->details;
+        return ResponseHelper::success('Data returned successfully', $book_details);
     }
 
     //  Returns: auther for certain book
     //  Accessable: by user and admin role
     public function getAutherForBook(int $bookId)
     {
-        try {
-            $auther = Book::findOrFail($bookId)->auther;
-            return ResponseHelper::success('Data returned successfully', $auther);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+
+        $auther = Book::findOrFail($bookId)->auther;
+        return ResponseHelper::success('Data returned successfully', $auther);
     }
 
     //  Returns:  book with details
     //  Accessable: by user and admin role
     public function getBookwithDetails($bookId)
     {
-        try {
-            $bookData = Book::with('details')->findOrFail($bookId);
-            return ResponseHelper::success('Data returned successfully', new BookDetailsResource($bookData));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $bookData = Book::with('details')->findOrFail($bookId);
+        return ResponseHelper::success('Data returned successfully', new BookDetailsResource($bookData));
     }
 
     //  Returns: all books with details for each book
     //  Accessable: by user and admin role
     public function getBookswithDetails()
     {
-        try {
-            $booksData = Book::with('details')->get();
-            return ResponseHelper::success('Data returned successfully', BookDetailsResource::collection($booksData));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $booksData = Book::with('details')->get();
+        return ResponseHelper::success('Data returned successfully', BookDetailsResource::collection($booksData));
     }
 
     //  Returns: attached successfully
     //  Accessable: by admin role
     public function storeBookInCategory(Request $request, int $bookId)
     {
-        try {
-            $book = Book::findOrFail($bookId);
-            if (!$book->categories()->where('category_id', $request->category_id)->exists()) {
-                $book->categories()->attach($request->category_id);
-                return ResponseHelper::success('Attached successfully', $book);
-            } else {
-                return ResponseHelper::error('The category is already attached to this book.', [], 409);
-            }
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
+        $book = Book::findOrFail($bookId);
+        if (!$book->categories()->where('category_id', $request->category_id)->exists()) {
+            $book->categories()->attach($request->category_id);
+            return ResponseHelper::success('Attached successfully', $book);
+        } else {
+            return ResponseHelper::error('The category is already attached to this book.', [], 409);
         }
     }
 
@@ -204,29 +159,18 @@ class BookController extends Controller
     //  Accessable: by user and admin role
     public function getCategoriesForBook(int $bookId)
     {
-        try {
-            $book = Book::findOrFail($bookId);
-            $categories = Book::findOrFail($bookId)->categories;
-            return ResponseHelper::success('Data return success',  CategoryResource::collection($categories));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $book = Book::findOrFail($bookId);
+        $categories = Book::findOrFail($bookId)->categories;
+        return ResponseHelper::success('Data return success',  CategoryResource::collection($categories));
     }
 
     //  Returns: all books with inputing key
     //  Accessable: by user and admin role
     public function search(string $key)
     {
-        try {
-            $book = Book::with('details')->where('title', 'LIKE', '%' . $key . '%')->get();
-            return ResponseHelper::success('Data return success', BookDetailsResource::collection($book));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+
+        $book = Book::with('details')->where('title', 'LIKE', '%' . $key . '%')->get();
+        return ResponseHelper::success('Data return success', BookDetailsResource::collection($book));
     }
 
     public function getContent($bookId)
@@ -239,22 +183,16 @@ class BookController extends Controller
             //reading pdf's content
             $pdfParser = new pdfParser();
             if ($filePath) {
-                try {
-                    $pdf = $pdfParser->parseFile($filePath);
-                    $content = $pdf->getText();
-                    return $this->textToSpeech($content);
-                } catch (\Exception $e) {
-                    return response()->json(['message' => 'Error parsing PDF: ' . $e->getMessage()], 500);
-                }
-            } else {
-                return response()->json(['message' => 'File not found: ' . $filePath], 404);
-            }
-        } elseif ($book->file_type === 'doc' || $book->file_type === 'docx') {
-            //  Analytic DOC and DOCX  
-            try {
+
+                $pdf = $pdfParser->parseFile($filePath);
+                $content = $pdf->getText();
+                // $words = explode(' ', $content);
+                $sentences = preg_split('/(?<=[.!?])\s+/', $content);
+                return view('display', ['sentences' => $sentences]);
+            } elseif ($book->file_type === 'doc' || $book->file_type === 'docx') {
+                //  Analytic DOC and DOCX  
                 $phpWord = \PhpOffice\PhpWord\IOFactory::load($filePath);
                 $content = '';
-
                 // Extract text from each section 
                 foreach ($phpWord->getSections() as $section) {
                     foreach ($section->getElements() as $element) {
@@ -267,46 +205,10 @@ class BookController extends Controller
                         }
                     }
                 }
-                // return response()->json(['content' => $content], 200);
-                return $this->textToSpeech($content);
-            } catch (\Exception $e) {
-                return response()->json(['message' => 'Error parsing DOC/DOCX: ' . $e->getMessage()], 500);
+                $sentences = preg_split('/(?<=[.!?])\s+/', $content);
+                return view('display', ['sentences' => $sentences]);
             }
         }
-
         return response()->json(['message' => 'Unsupported file type: ' . $book->file_type], 400);
     }
-
-    public function textToSpeech($text)
-    {
-        
-        if (empty($text)) {
-            return response()->json(['message' => 'No text provided for conversion.'], 400);
-        }
-
-        // نصائح لتجنب مشاكل الترميز، خاصة إذا كان هناك أحرف خاصة  
-        $text = escapeshellarg($text);
-        $audioFilePath = storage_path('app/public/audio/') . time() . '_output.wav';
-        return response()->json($audioFilePath, 200);
-        
-    //     // تأكد من وجود المجلد  
-    //     $audioDir = dirname($audioFilePath);
-    //     if (!file_exists($audioDir)) {
-    //         mkdir($audioDir, 0777, true); // انشئ المجلد إذا لم يكن موجوداً  
-    //     }
-
-    //     // استخدام eSpeak مع المسار الصحيح  
-    //     $command = '"C:\\Program Files (x86)\\eSpeak\\command_line\\espeak.exe" -w ' . $audioFilePath . ' ' . $text;
-    //     exec($command, $output, $returnVar);
-
-    //     // التحقق من نتيجة الأمر  
-    //     if ($returnVar !== 0) {
-    //         // قم بتسجيل مخرجات الأمر  
-    //         Log::error('Audio generation command failed: ' . implode("\n", $output));
-    //         return response()->json(['message' => 'Error generating audio: ' . implode("\n", $output)], 500);
-    //     }
-
-    //     Log::info('Audio generated successfully: ' . $audioFilePath);
-    //     return response()->json(['message' => 'Audio generated successfully.', 'audio_file' => $audioFilePath], 200);
-     }
 }

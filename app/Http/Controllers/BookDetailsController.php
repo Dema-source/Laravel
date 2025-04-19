@@ -3,43 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
-use App\Http\Requests\StoreDetailsRequest;
-use App\Http\Requests\UpdateDetailsRequest;
-use App\Http\Requests\UpdateNameRequest;
+use App\Http\Requests\BookDetailsRequest;
 use App\Http\Resources\Book_DetailsResource;
-use Illuminate\Http\Request;
 use App\Models\Book_Details;
-use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class BookDetailsController extends Controller
 {
-
-    //  Returns: books details
-    //  Accessable: by user and admin role
-    public function viewBooksDetails()
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
     {
         $details = Book_Details::all();
         return ResponseHelper::success('Data returned successfully', Book_DetailsResource::collection($details));
     }
 
-    //  Returns: book details
-    //  Accessable: by user and admin role
-    public function viewBookDetails($Book_DetailsId)
-    {
-        try {
-            $details = Book_Details::findOrFail($Book_DetailsId);
-            return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($details));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
-    }
-
-    //  Returns: Book_Details
-    //  Accessable: by admin role
-    public function storeBookDetails(StoreDetailsRequest $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(BookDetailsRequest $request)
     {
         $existingBookDetails = Book_Details::where('book_id', $request->book_id)
             ->orWhere('isbn', $request->isbn)
@@ -51,48 +34,41 @@ class BookDetailsController extends Controller
         return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($Book_Details));
     }
 
-    //  Returns: Book_Details
-    //  Accessable: by admin role
-    public function updateBookDetails(UpdateDetailsRequest $request, int $Book_DetailsId)
+    /**
+     * Display the specified resource.
+     */
+    public function show($Book_DetailsId)
     {
-        try {
-            $Book_Details = Book_Details::findOrFail($Book_DetailsId);
-            $Book_Details->update($request->validated());
-            return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($Book_Details));
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $details = Book_Details::findOrFail($Book_DetailsId);
+        return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($details));
     }
 
-    //  Returns: nothing
-    //  Accessable: by admin role
-    public function destroyBookDetails(int $Book_DetailsId)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(BookDetailsRequest $request, int $Book_DetailsId)
     {
-        try {
-            $Book_Details = Book_Details::findOrFail($Book_DetailsId);
-            $Book_Details->delete();
-            return ResponseHelper::success('Data returned successfully', []);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $Book_Details = Book_Details::findOrFail($Book_DetailsId);
+        $Book_Details->update($request->validated());
+        return ResponseHelper::success('Data returned successfully', new Book_DetailsResource($Book_Details));
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(int $Book_DetailsId)
+    {
+        $Book_Details = Book_Details::findOrFail($Book_DetailsId);
+        $Book_Details->delete();
+        return ResponseHelper::success('Data returned successfully', []);
     }
 
     //  Returns: book
     //  Accessable: by user and admin role
     public function getBookForDetails(int $Book_DetailsId)
     {
-        try {
-            $book = Book_Details::findOrFail($Book_DetailsId)->book;
-            return ResponseHelper::success('Data returned successfully', $book);
-        } catch (ModelNotFoundException $e) {
-            return ResponseHelper::error('Not Found', [], 404);
-        } catch (Exception $e) {
-            return ResponseHelper::error($e->getMessage(), [], 500);
-        }
+        $book = Book_Details::findOrFail($Book_DetailsId)->book;
+        return ResponseHelper::success('Data returned successfully', $book);
     }
 
     //  Returns: books between 2 dates

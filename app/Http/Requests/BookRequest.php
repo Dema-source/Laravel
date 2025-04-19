@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-class StoreDetailsRequest extends FormRequest
+class BookRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,23 +24,28 @@ class StoreDetailsRequest extends FormRequest
      */
     public function rules(): array
     {
+        if ($this->isMethod('POST')) {
+            return $this->createRules();
+        }
+        return $this->updateRules();
+    }
+    public function createRules()
+    {
         return [
-            'book_id' => 'required',
-            'isbn' => 'required',
-            'number_of_pages' => 'sometimes',
-            // 'number_of_pages' => 'sometimes|min:200|max:2000',
-            'publication_date' => 'required|date'
+            'auther_id' => 'required|exists:authers,id',
+            'title' => 'required|string|unique:books,title',
+            'image' => 'required|image|mimes:png,jpg,jpeg|max:2048',
+            'file_path' => 'file|mimes:pdf,doc,docx|max:2048|required',
         ];
     }
-    // public function messages()
-    // {
-    //     return [
-    //         'isbn.required' => 'Enter isbn',
-    //         'number_of_pages.min' => 'number_of_pages must not be less than 200',
-    //         'publication_date.required' => 'Enter publication_date',
-    //         'publication_date.date' => 'Enter a valid date'
-    //     ];
-    // }
+    public function updateRules()
+    {
+        return [
+            'title' => 'sometimes|string',
+            'image' => 'sometimes|image|mimes:png,jpg,jpeg|max:2048',
+        ];
+    }
+    
     public function failedValidation(Validator $validator)
     {
         throw new HttpResponseException(ResponseHelper::returnValidationError($validator));
